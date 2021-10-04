@@ -1,0 +1,6 @@
+wheel>=0.36.2
+pyicu>=2.6
+lxml>=4.6.2
+numpy>=1.19.5
+networkx>=2.5
+

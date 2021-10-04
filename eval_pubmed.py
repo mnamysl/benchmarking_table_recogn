@@ -27,7 +27,6 @@ class ProcMethod(Enum):
     Tabby = 'tabby'
     Abbyy = 'abbyy'
     Tabula = 'tabula'
-    Camelot = 'camelot'
     Unknown = 'unknown'
 
     def __str__(self):
@@ -352,14 +351,7 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
                         print(sys.exc_info())
                         raw_tables = json.loads("[]")
                 #print(json.dumps(raw_tables, indent=2))
-                parse_cells = _parse_cells_tabula
-            elif method in [ProcMethod.Camelot]:
-                from zipfile import ZipFile
-                zip_file=ZipFile(file_path)
-                raw_tables = [json.loads(zip_file.read(name)) for name in zip_file.namelist()]
-                #for t in raw_tables:
-                #    print(json.dumps(t))
-                parse_cells = _parse_cells_camelot
+                parse_cells = _parse_cells_tabula            
 
             file_status = True
             
@@ -427,19 +419,6 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
 
     print(f"Summary: loaded {cnt_loaded} files and {cnt_tables} tables.", file=eval_log)
     return tables
-
-def _parse_cells_camelot(json_table):
-    
-    cells = list()
-    cell_id = 0
-
-    for row_idx, json_row in enumerate(json_table):
-        for col_idx in range(len(json_row)):
-            text = json_row[f"{col_idx}"].strip()
-            cells.append(Cell(cell_id, text, row_idx, col_idx, row_idx, col_idx))
-            cell_id += 1
-
-    return cells
 
 
 def _parse_cells_tabula(json_table):
@@ -819,50 +798,35 @@ if __name__ == "__main__":
 
     verbose = False
     record_overlap = False
-    method = ProcMethod.IAIS
-    #method = ProcMethod.Unknown
+    method = ProcMethod.IAIS    
     
     eval_log = io.StringIO("")
     
     ### REFERENCES
-    if method in [ProcMethod.GT, ProcMethod.IAIS, ProcMethod.Tabby, ProcMethod.Abbyy, ProcMethod.Tabula, ProcMethod.Camelot]:
-        gt_dir = os.path.join(os.environ['PMC_PATH'], "gt", "scai")
-    else:
-        gt_dir = os.path.join(os.environ['PMC_PATH'], "dummy", "gt")
-        #gt_dir = os.path.join(os.environ['PMC_PATH'], "res", "test2", "gt")
+    if method in [ProcMethod.GT, ProcMethod.IAIS, ProcMethod.Tabby, ProcMethod.Abbyy, ProcMethod.Tabula]:
+        gt_dir = "gt"    
     
     ### RESULTS
     res_multivariant = True
 
     if method == ProcMethod.GT:
-        res_dir = os.path.join(os.environ['PMC_PATH'], "gt", "scai")
+        res_dir = "gt"
         name_pattern = "PMC*-str.xml"
         res_multivariant = False
     elif method == ProcMethod.IAIS:
-        res_dir = os.path.join(os.environ['PMC_PATH'], "res", "scai")
+        res_dir = os.path.join("res", "tab.iais")
         name_pattern = "PMC*-str-result.xml"
     elif method == ProcMethod.Tabby:
-        res_dir = os.path.join(os.environ['TABBY_TEST'], "scai", "xml")
+        res_dir = os.path.join("res", "tabby")
         name_pattern = "PMC*-str-result.xml"
     elif method == ProcMethod.Abbyy:
-        res_dir = os.path.join(os.environ['PMC_PATH'], "res", "abbyy")
+        res_dir = os.path.join("res", "abbyy")
         name_pattern = "PMC*.xml"
     elif method == ProcMethod.Tabula:
-        #res_dir = os.path.join(os.environ['PMC_PATH'], "res", "tabula_lattice")
-        res_dir = os.path.join(os.environ['PMC_PATH'], "res", "tabula_stream")
+        #res_dir = os.path.join("res", "tabula_lattice")
+        res_dir = os.path.join("res", "tabula_stream")
         #res_dir = "/data/mnamysl/HBP/tabula-java/results"
         name_pattern = "PMC*-str-result.json"
-    elif method == ProcMethod.Camelot:
-        #res_dir = os.path.join(os.environ['PMC_PATH'], "res", "camelot_lattice")
-        #res_dir = os.path.join(os.environ['PMC_PATH'], "res", "camelot_stream")
-        name_pattern = "PMC*.zip"
-    else:
-        res_dir = os.path.join(os.environ['PMC_PATH'], "dummy", "res")
-        name_pattern = "PMC*.xml"
-        method = ProcMethod.Abbyy
-        #name_pattern = "PMC*-str-result.xml"
-        #res_dir = os.path.join(os.environ['PMC_PATH'], "res", "test2", "gt")
-        #name_pattern = "PMC*-str.xml"
 
     tuples_to_use = load_complexity_classes("mavo_table_classes.csv", [0,1,2], eval_log=eval_log) 
 

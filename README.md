@@ -1,1 +1,1 @@
-# benchmarking_table_recognition
+# benchmarking_table_recogn

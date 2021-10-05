@@ -60,7 +60,11 @@ python3 eval_pubmed.py --res res/tab.iais --single_variant
 
 #### Evaluating Other Table Recognition Methods
 
-The PDF files from our biomedical data set can be found [here](https://zenodo.org/record/5549977#.YVxrS3uxVH6).
+The results of other methods can be easily evaluated. You only need to process the PDF files from [our biomedical data set](https://zenodo.org/record/5549977#.YVxrS3uxVH6) using your table recognition method and store the results in one of the supported output formats (e.g., in the ICDAR 2013 Table Competition format). Then you can to call the evaluation script with the path to your results as follows:
+
+```bash
+python3 eval_pubmed.py --res <path_to_your_result>
+```
 
 ### Citing Our Work
 

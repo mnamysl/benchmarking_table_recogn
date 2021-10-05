@@ -310,7 +310,7 @@ def load_complexity_classes(file_path: str, complexities_to_use=[0,1,2], eval_lo
 
 
 def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivariant = False, record_overlap = False, 
-        method=ParsingMethod.ICDAR, tuples_to_use=(), eval_log = None):
+        method=ParsingMethod.ICDAR, tuples_to_use=(), eval_log = None, filenames = []):
 
     tables = dict()
     pattern = f"{dir_path}/**/{name_pattern}"
@@ -323,11 +323,15 @@ def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivari
 
         basename = os.path.basename(file_path)
 
-        m = re.match("PMC(\d+)(_(\d+)){0,1}", basename)
+        m = re.match("PMC(\d+)(_(\d+)){0,1}", basename)        
 
         if m:
             file_id = m.group(1)
             file_nr = m.group(3)
+            
+            if len(filenames) > 0 and f"PMC{file_id}" not in filenames:
+                #print("skipping", file_id)
+                continue
             
             if not multivariant and file_nr != None:
                 continue

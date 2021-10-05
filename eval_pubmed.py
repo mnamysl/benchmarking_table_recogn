@@ -4,6 +4,7 @@ import sys
 import glob
 import json
 import re
+import logging
 
 from icu import UnicodeString, Transliterator, UTransDirection
 from enum import Enum
@@ -13,24 +14,31 @@ import numpy as np
 import networkx as nx
 
 
-SINGLE_VARIANT_EVAL = True
 IGNORE_FP_TABLES = False
 
 
-class ProcMethod(Enum):
+
+class ParsingMethod(Enum):
     """
-    Input method (one of: gt, iais, tabby, abbyy, tabula)
+    Parsing method (one of: icdar, abbyy, tabula-json)
     """
 
-    GT = 'gt'
-    IAIS = 'iais'
-    Tabby = 'tabby'
+    ICDAR = 'icdar'
     Abbyy = 'abbyy'
-    Tabula = 'tabula'
+    TabulaJson = 'tabula-json'
     Unknown = 'unknown'
 
     def __str__(self):
         return self.name
+    
+    @staticmethod
+    def get_extension(method):
+        if method in [ParsingMethod.ICDAR, ParsingMethod.Abbyy]:
+            return "xml"
+        elif method in [ParsingMethod.TabulaJson]:
+            return "json"
+        else:
+            return "*"
 
 
 class Cell(object):
@@ -301,8 +309,8 @@ def load_complexity_classes(file_path: str, complexities_to_use=[0,1,2], eval_lo
     return tuples
 
 
-def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = False, record_overlap = False, 
-        method=ProcMethod.IAIS, tuples_to_use=(), eval_log = None):
+def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivariant = False, record_overlap = False, 
+        method=ParsingMethod.ICDAR, tuples_to_use=(), eval_log = None):
 
     tables = dict()
     pattern = f"{dir_path}/**/{name_pattern}"
@@ -321,28 +329,25 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
             file_id = m.group(1)
             file_nr = m.group(3)
             
-            if SINGLE_VARIANT_EVAL:
-                if file_nr != None:
-                    continue
+            if not multivariant and file_nr != None:
+                continue
 
             key = f"PMC{file_id}"
 
-            if method in [ProcMethod.GT, ProcMethod.IAIS, ProcMethod.Tabby, ProcMethod.Unknown]:
-                doc = etree.parse(file_path, etree.XMLParser(encoding='utf-8', ns_clean=True, recover=True))                 
-                #print(etree.tostring(doc))
+            if method in [ParsingMethod.ICDAR]:
+                doc = etree.parse(file_path, etree.XMLParser(encoding='utf-8', ns_clean=True, recover=True))
                 raw_tables = doc.findall(".//table")
                 parse_cells = _parse_cells_icdar
 
-            elif method in [ProcMethod.Abbyy]:
+            elif method in [ParsingMethod.Abbyy]:
                 with open(file_path, 'r', encoding='utf-8-sig') as f:
                     file_content = f.read().encode('utf-8')
                     file_content = file_content.decode('utf-8').replace("http://www.abbyy.com/FineReader_xml/FineReader10-schema-v1.xml", "").encode('utf-8')
                 doc = etree.XML(file_content, etree.XMLParser(encoding='utf-8', ns_clean=True, recover=True))
-                #print(etree.tostring(doc))
                 raw_tables = doc.findall(".//block[@blockType='Table']")
                 parse_cells = _parse_cells_abbyy
 
-            elif method in [ProcMethod.Tabula]:
+            elif method in [ParsingMethod.TabulaJson]:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     try:
                         raw_tables = json.load(f)
@@ -350,21 +355,21 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
                         print(f"Failed loading '{file_path}'")
                         print(sys.exc_info())
                         raw_tables = json.loads("[]")
-                #print(json.dumps(raw_tables, indent=2))
                 parse_cells = _parse_cells_tabula            
 
             file_status = True
             
             # add an empty table record if not exists
-            if multivariant:
+            if is_gt:
+                item = tables.get(key, list())
+                tables[key] = item                
+            else:
                 items = tables.get(key, dict())
                 inner_key = f"PMC{file_id}_{file_nr}"
                 item = items.get(inner_key, list())
                 items[inner_key] = item
                 tables[key] = items
-            else:
-                item = tables.get(key, list())
-                tables[key] = item
+
 
             overlap_log = io.StringIO("")
 
@@ -379,7 +384,17 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
         
                 table.extract_relations(verbose=False)
 
-                if multivariant:
+                if is_gt:
+                    item = tables.get(key, list())
+
+                    # reset tables with IDs not in tuples_to_use
+                    item_key = (f"PMC{file_id}", len(item)+1)
+                    table.active = item_key in tuples_to_use
+
+                    item.append(table)
+                    tables[key] = item
+                    cnt_tables += 1
+                else:
                     items = tables.get(key, dict())
                     inner_key = f"PMC{file_id}_{file_nr}"
                     item = items.get(inner_key, list())
@@ -392,16 +407,7 @@ def load_xml_files(dir_path: str, name_pattern = "*-str.xml", multivariant = Fal
                     items[inner_key] = item
                     tables[key] = items
                     cnt_tables += 1
-                else:
-                    item = tables.get(key, list())
 
-                    # reset tables with IDs not in tuples_to_use
-                    item_key = (f"PMC{file_id}", len(item)+1)
-                    table.active = item_key in tuples_to_use
-
-                    item.append(table)
-                    tables[key] = item
-                    cnt_tables += 1
 
                 #print(f"[OK] name:'{file_path}' key:{key} num_relations={len(table.get_relations())}")
 
@@ -790,55 +796,81 @@ def _get_result(status:bool=False, tp:int=0, fn:int=0, fp:int=0, precision:float
         "TP": tp,
         "FN": fn,
         "FP": fp,
-        "log": eval_log.getvalue() if eval_log != None else ""
+        "log": eval_log.getvalue() if eval_log not in [None, sys.stdout, sys.stderr] else ""
     }
+
+
+def parse_args():
+    """
+    Parses command-line arguments.
+    
+    Returns:
+        parsed arguments
+    """
+        
+    import argparse
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--res', dest='res_dir', type=str, help="a directory wih recognition results", default='', required=True)
+    parser.add_argument('--gt', dest='gt_dir', type=str, help="a directory wih ground-truth annotations", default='gt')
+    parser.add_argument('--single_variant', dest='multivariant', action='store_false', help="indicates whether to perform single-variant evaluation", default=True)
+    parser.add_argument('--method', dest='method', type=ParsingMethod, choices=list(ParsingMethod), help="parsing method (icdar, abbyy, tabula-json)", default='icdar')
+    
+    """
+
+    parser.add_argument('--model', dest='model', type=str, help="model path", default='', required=True)
+    parser.add_argument('--corpus', dest='corpus', type=str, help="data corpus for training or evaluation", default='', required=False)
+    parser.add_argument('--checkpoint', dest='checkpoint', type=str, help="checkpoint file", default='best-model.pt')
+    parser.add_argument('--device', dest='device', type=str.lower, help="device to use", default='cuda')
+    parser.add_argument('--max_epochs', dest='max_epochs', type=int, help="maximum number of training epochs", default=100)
+    parser.add_argument('--downsample', dest='downsample', type=float, help="downsample rate [0.0-1.0]", default=1.0)
+    parser.add_argument('--train_with_dev', dest='train_with_dev', action='store_true', help="train using development data set", default=False)
+    parser.add_argument('--verbose', dest='verbose', help="print verbose info", action="store_true", default=False)
+    parser.add_argument('--doc_as_sent', dest='document_as_sentence', action='store_true', help="use the whole document as one sentence", default=False)
+    parser.add_argument('--use_text_pos', dest='use_text_positions', action='store_true', help="use text positions as additional features", default=False)
+    parser.add_argument('--use_chargrid_feat', dest='use_chargrid_features', action='store_true', help="use Chargrid vectors as additional features", default=False)
+    parser.add_argument('--shuffle_sent', dest='shuffle_train_sentences', action='store_true', 
+            help="shuffle sentences on every epoch during training", default=False)
+    parser.add_argument('--chargrid', dest='chargrid_checkpoint_path', type=str, help="Chargrid model path", default='chargrid/models/chargrid_model.pth', required=False)
+    parser.add_argument('--rebuild_cache', dest='rebuild_cache', action='store_true', help="rebuild Chargrid cache", default=False)
+    parser.add_argument('--features_in_memory', dest='features_in_memory', action='store_true', help="keep Chargrid features in GPU memory", default=False)
+    """
+
+    args = parser.parse_args()
+            
+    return args
+
 
 
 if __name__ == "__main__":
 
     verbose = False
     record_overlap = False
-    method = ProcMethod.IAIS    
     
+    logging.basicConfig()
+    logging.getLogger(__name__).setLevel(logging.INFO)
+    log = logging.getLogger(__name__)
+    
+    args = parse_args()
+    log.info(args)
+        
     eval_log = io.StringIO("")
-    
-    ### REFERENCES
-    if method in [ProcMethod.GT, ProcMethod.IAIS, ProcMethod.Tabby, ProcMethod.Abbyy, ProcMethod.Tabula]:
-        gt_dir = "gt"    
-    
-    ### RESULTS
-    res_multivariant = True
+    eval_log = sys.stdout
 
-    if method == ProcMethod.GT:
-        res_dir = "gt"
-        name_pattern = "PMC*-str.xml"
-        res_multivariant = False
-    elif method == ProcMethod.IAIS:
-        res_dir = os.path.join("res", "tab.iais")
-        name_pattern = "PMC*-str-result.xml"
-    elif method == ProcMethod.Tabby:
-        res_dir = os.path.join("res", "tabby")
-        name_pattern = "PMC*-str-result.xml"
-    elif method == ProcMethod.Abbyy:
-        res_dir = os.path.join("res", "abbyy")
-        name_pattern = "PMC*.xml"
-    elif method == ProcMethod.Tabula:
-        #res_dir = os.path.join("res", "tabula_lattice")
-        res_dir = os.path.join("res", "tabula_stream")
-        #res_dir = "/data/mnamysl/HBP/tabula-java/results"
-        name_pattern = "PMC*-str-result.json"
+    name_pattern = f"PMC*.{ParsingMethod.get_extension(args.method)}"
 
     tuples_to_use = load_complexity_classes("mavo_table_classes.csv", [0,1,2], eval_log=eval_log) 
 
-    res_files = load_xml_files(res_dir, name_pattern, multivariant=res_multivariant, method=method, 
+    res_files = load_xml_files(args.res_dir, "PMC*.xml", is_gt=False, multivariant=args.multivariant, method=args.method, 
         tuples_to_use=tuples_to_use, eval_log=eval_log)
     
-    print_line(n=100, eval_log=eval_log)    
+    print_line(n=100, eval_log=eval_log)
     
-    gt_files = load_xml_files(gt_dir, "PMC*-str.xml", record_overlap=record_overlap, 
+    gt_files = load_xml_files(args.gt_dir, "PMC*.xml", is_gt=True, record_overlap=record_overlap, 
         tuples_to_use=tuples_to_use, eval_log=eval_log)
 
-    result = eval_data(gt_files, res_files, res_multivariant=res_multivariant, eval_log=eval_log)
+    result = eval_data(gt_files, res_files, res_multivariant=True, eval_log=eval_log)
 
     #print(json.dumps(result, indent=4))
     print(result["log"])

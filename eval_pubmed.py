@@ -14,8 +14,6 @@ import numpy as np
 import networkx as nx
 
 
-IGNORE_FP_TABLES = False
-
 
 
 class ParsingMethod(Enum):
@@ -639,7 +637,7 @@ def _create_graph(gt_items, res_items, eval_log):
 
     return G, gt_nodes, res_nodes, node2item, scores
 
-def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, eval_log):
+def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ignore_fp, eval_log):
     
     # calculate all scores for each pair of tables in the GT and RES data
     cnt_gt, cnt_res = len(gt_items), len(res_items)
@@ -686,7 +684,7 @@ def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ev
                 print(f"\t\tMatching for '{n}' not found in the results [MISS]! FN += {fn}", file=eval_log)
                 page_FN += fn
         
-        if not IGNORE_FP_TABLES:
+        if not ignore_fp:
             for n in res_nodes:
                 fp = len(node2item[n])
                 print(f"\t\tMatching for '{n}' not found in the references [FALSE-ALARM]! FP += {fp}", file=eval_log)
@@ -706,7 +704,7 @@ def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ev
     return TP, FN, FP
 
 
-def eval_data(gt_files, res_files, res_multivariant=True, eval_log=None):
+def eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_log=None):
 
     TP, FP, FN = 0, 0, 0
 
@@ -724,7 +722,7 @@ def eval_data(gt_files, res_files, res_multivariant=True, eval_log=None):
 
             if res_multivariant:
                 for sub_key, sub_items in res_items.items():
-                    tp, fn, fp = _eval_pairs_in_file(key, sub_key, gt_items, sub_items, 0, 0, 0, eval_log)
+                    tp, fn, fp = _eval_pairs_in_file(key, sub_key, gt_items, sub_items, 0, 0, 0, ignore_fp, eval_log)
                     prec, rec, f1, f05 = _calc_scores(tp, fn, fp)
                     secondary_score = tp-fp-fn
                     if (f1 > best_f1) or (f1 == best_f1 and secondary_score > best_secondary_score):
@@ -735,7 +733,7 @@ def eval_data(gt_files, res_files, res_multivariant=True, eval_log=None):
                     print_line(c='-', prefix='\t', eval_log=eval_log)
             else:
                 best_sub_key = key
-                best_tp, best_fn, best_fp = _eval_pairs_in_file(key, best_sub_key, gt_items, res_items, 0, 0, 0, eval_log)
+                best_tp, best_fn, best_fp = _eval_pairs_in_file(key, best_sub_key, gt_items, res_items, 0, 0, 0, ignore_fp, eval_log)
                 best_precision, best_recall, best_f1, best_f05 = _calc_scores(best_tp, best_fn, best_fp)
 
                 print_line(c='-', prefix='\t', eval_log=eval_log)
@@ -765,7 +763,7 @@ def eval_data(gt_files, res_files, res_multivariant=True, eval_log=None):
 
         print_line(c='=', eval_log=eval_log)
 
-    if not IGNORE_FP_TABLES:
+    if not ignore_fp:
         # count remaining FP's
         for key, res_items in res_files.items():
             print(f"'{key}' not found in the reference [FALSE-ALARM]!", file=eval_log)
@@ -818,28 +816,15 @@ def parse_args():
 
     parser.add_argument('--res', dest='res_dir', type=str, help="a directory wih recognition results", default='', required=True)
     parser.add_argument('--gt', dest='gt_dir', type=str, help="a directory wih ground-truth annotations", default='gt')
-    parser.add_argument('--single_variant', dest='multivariant', action='store_false', help="indicates whether to perform single-variant evaluation", default=True)
-    parser.add_argument('--method', dest='method', type=ParsingMethod, choices=list(ParsingMethod), help="parsing method (icdar, abbyy, tabula-json)", default='icdar')
-    
-    """
-
-    parser.add_argument('--model', dest='model', type=str, help="model path", default='', required=True)
-    parser.add_argument('--corpus', dest='corpus', type=str, help="data corpus for training or evaluation", default='', required=False)
-    parser.add_argument('--checkpoint', dest='checkpoint', type=str, help="checkpoint file", default='best-model.pt')
-    parser.add_argument('--device', dest='device', type=str.lower, help="device to use", default='cuda')
-    parser.add_argument('--max_epochs', dest='max_epochs', type=int, help="maximum number of training epochs", default=100)
-    parser.add_argument('--downsample', dest='downsample', type=float, help="downsample rate [0.0-1.0]", default=1.0)
-    parser.add_argument('--train_with_dev', dest='train_with_dev', action='store_true', help="train using development data set", default=False)
+    parser.add_argument('--single_variant', dest='multivariant', action='store_false', 
+            help="indicates whether to perform single-variant evaluation", default=True)
+    parser.add_argument('--method', dest='method', type=ParsingMethod, choices=list(ParsingMethod), 
+            help="parsing method (icdar, abbyy, tabula-json)", default='icdar')
+    parser.add_argument('--complexity', dest='complexity', nargs="*", type=int, choices=[0, 1, 2], 
+            help="table complexity level (0=simple, 1=complicated, 2=complex)", default='[0, 1, 2]')
     parser.add_argument('--verbose', dest='verbose', help="print verbose info", action="store_true", default=False)
-    parser.add_argument('--doc_as_sent', dest='document_as_sentence', action='store_true', help="use the whole document as one sentence", default=False)
-    parser.add_argument('--use_text_pos', dest='use_text_positions', action='store_true', help="use text positions as additional features", default=False)
-    parser.add_argument('--use_chargrid_feat', dest='use_chargrid_features', action='store_true', help="use Chargrid vectors as additional features", default=False)
-    parser.add_argument('--shuffle_sent', dest='shuffle_train_sentences', action='store_true', 
-            help="shuffle sentences on every epoch during training", default=False)
-    parser.add_argument('--chargrid', dest='chargrid_checkpoint_path', type=str, help="Chargrid model path", default='chargrid/models/chargrid_model.pth', required=False)
-    parser.add_argument('--rebuild_cache', dest='rebuild_cache', action='store_true', help="rebuild Chargrid cache", default=False)
-    parser.add_argument('--features_in_memory', dest='features_in_memory', action='store_true', help="keep Chargrid features in GPU memory", default=False)
-    """
+    parser.add_argument('--ignore_fp', dest='ignore_fp', action='store_true', 
+            help="ignore all false-positively recognized tables", default=False)
 
     args = parser.parse_args()
             
@@ -864,9 +849,9 @@ if __name__ == "__main__":
 
     name_pattern = f"PMC*.{ParsingMethod.get_extension(args.method)}"
 
-    tuples_to_use = load_complexity_classes("mavo_table_classes.csv", [0,1,2], eval_log=eval_log) 
+    tuples_to_use = load_complexity_classes("mavo_table_classes.csv", args.complexity, eval_log=eval_log) 
 
-    res_files = load_xml_files(args.res_dir, "PMC*.xml", is_gt=False, multivariant=args.multivariant, method=args.method, 
+    res_files = load_xml_files(args.res_dir, name_pattern, is_gt=False, multivariant=args.multivariant, method=args.method, 
         tuples_to_use=tuples_to_use, eval_log=eval_log)
     
     print_line(n=100, eval_log=eval_log)
@@ -874,7 +859,7 @@ if __name__ == "__main__":
     gt_files = load_xml_files(args.gt_dir, "PMC*.xml", is_gt=True, record_overlap=record_overlap, 
         tuples_to_use=tuples_to_use, eval_log=eval_log)
 
-    result = eval_data(gt_files, res_files, res_multivariant=True, eval_log=eval_log)
+    result = eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=args.ignore_fp, eval_log=eval_log)
 
     #print(json.dumps(result, indent=4))
     print(result["log"])

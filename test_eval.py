@@ -29,7 +29,7 @@ def evaluate(method, gt_dir, res_dir, multivariant, filenames=[]):
     gt_files = load_xml_files(gt_dir, "PMC*.xml", is_gt=True, record_overlap=False, 
         tuples_to_use=tuples_to_use, eval_log=eval_log, filenames=filenames)
 
-    eval_res = eval_data(gt_files, res_files, res_multivariant=True, eval_log=eval_log)
+    eval_res = eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_log=eval_log)
 
     result = get_str(tp=eval_res['TP'], fn=eval_res['FN'], fp=eval_res['FP'])
     

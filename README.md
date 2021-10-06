@@ -96,26 +96,26 @@ python3 eval_pubmed.py --res res/tabby --single_variant
 
 * [Tabula](https://github.com/tabulapdf/tabula-java) (v1.0.4):
   * 'Stream' mode:
-```bash
-python3 eval_pubmed.py --res res/tabula_stream --method tabula-json
-```
-```FINAL RESULT: TP:71693 FN:126489 FP:610179 GT=198182 RES=681872 PRECISION=0.1051 RECALL=0.3618 F1=0.1629 F0.5=0.1225```
+  ```bash
+  python3 eval_pubmed.py --res res/tabula_stream --method tabula-json
+  ```
+  ```FINAL RESULT: TP:71693 FN:126489 FP:610179 GT=198182 RES=681872 PRECISION=0.1051 RECALL=0.3618 F1=0.1629 F0.5=0.1225```
 
-```bash
-python3 eval_pubmed.py --res res/tabula_stream --method tabula-json --single_variant
-```
-```FINAL RESULT: TP:69435 FN:128747 FP:624288 GT=198182 RES=693723 PRECISION=0.1001 RECALL=0.3504 F1=0.1557 F0.5=0.1168```
+  ```bash
+  python3 eval_pubmed.py --res res/tabula_stream --method tabula-json --single_variant
+  ```
+  ```FINAL RESULT: TP:69435 FN:128747 FP:624288 GT=198182 RES=693723 PRECISION=0.1001 RECALL=0.3504 F1=0.1557 F0.5=0.1168```
 
   * 'Lattice' mode
-```bash
-python3 eval_pubmed.py --res res/tabula_lattice --method tabula-json
-```
-```FINAL RESULT: TP:26086 FN:172096 FP:21613 GT=198182 RES=47699 PRECISION=0.5469 RECALL=0.1316 F1=0.2122 F0.5=0.3353```
+  ```bash
+  python3 eval_pubmed.py --res res/tabula_lattice --method tabula-json
+  ```
+  ```FINAL RESULT: TP:26086 FN:172096 FP:21613 GT=198182 RES=47699 PRECISION=0.5469 RECALL=0.1316 F1=0.2122 F0.5=0.3353```
 
-```bash
-python3 eval_pubmed.py --res res/tabula_lattice --method tabula-json --single_variant
-```
-```FINAL RESULT: TP:25689 FN:172493 FP:15065 GT=198182 RES=40754 PRECISION=0.6303 RECALL=0.1296 F1=0.2150 F0.5=0.3556```
+  ```bash
+  python3 eval_pubmed.py --res res/tabula_lattice --method tabula-json --single_variant
+  ```
+  ```FINAL RESULT: TP:25689 FN:172493 FP:15065 GT=198182 RES=40754 PRECISION=0.6303 RECALL=0.1296 F1=0.2150 F0.5=0.3556```
 
 #### Evaluating Other Table Recognition Methods
 

@@ -1,6 +1,6 @@
 # Table Recognition Benchmarking
 
-This repository contains the code that can be used to reproduce the results presented in our paper: TBA. 
+This repository contains the code that can be used to reproduce the results presented in our paper: **Benchmarking Table Recognition Performance on Biomedical Literature on Neurological Disorders**. 
 
 ## Quick Start
 

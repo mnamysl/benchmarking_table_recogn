@@ -15,7 +15,6 @@ import networkx as nx
 
 
 
-
 class ParsingMethod(Enum):
     """
     Parsing method (one of: icdar, abbyy, tabula-json)
@@ -57,17 +56,11 @@ class Cell(object):
     def __str__(self):
         return self.text
         
-    #def __repr__(self):
-    #    return f"Cell({self.id}, {self.text}, {self.start_row}, {self.start_col}, {self.end_row}, {self.end_col})"
-     
     def __eq__(self, other):
         if isinstance(other, Cell):
             return self.text == other.text
         else:
             return False
-    
-    #def __hash__(self):
-    #    return hash(self.id) ^ hash(self.text) ^ hash(self.start_row) ^ hash(self.start_col) ^ hash(self.end_row) ^ hash(self.end_col) ^ hash(self.id)
     
     def empty(self):
         return len(self.text) == 0
@@ -97,9 +90,6 @@ class AdjRelation(object):
     def __str__(self):
         return f"'{str(self.from_cell)}' -> '{str(self.to_cell)}' [{self.direction}]"
 
-    #def __repr__(self):
-    #    return f"AdjRelation({self.from_cell}, {self.to_cell}, {str(self.direction)})"
-    
     def __eq__(self, other):
         if isinstance(other, AdjRelation):
             return str(self.from_cell) == str(other.from_cell) and str(self.to_cell) == str(other.to_cell) and self.direction == other.direction
@@ -108,9 +98,6 @@ class AdjRelation(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    #def __hash__(self):
-    #    return hash(self.from_cell) ^ hash(self.to_cell) ^ hash(self.direction)
 
 
 class Table(object):
@@ -168,10 +155,6 @@ class Table(object):
         self.rows = max([c.end_row for c in self.cells]) + 1 if len(self.cells) > 0 else 0
         self.cols = max([c.end_col for c in self.cells]) + 1 if len(self.cells) > 0 else 0
 
-        #if len(self.rows) == 0 or len(self.cols) == 0:
-        #    return True
-
-        #self.cell_matrix = np.empty([self.rows, self.cols], dtype = Cell)
         self.cell_matrix = np.full([self.rows, self.cols], Cell(), dtype = Cell)
         
         has_overlapping_cells, table_header_written = False, False
@@ -218,8 +201,6 @@ class Table(object):
         else:
             print(f"ERROR: unknown relation direction: {direction}!")
             exit(-1)
-
-        #print(f"dir: {direction} dims=({dim0},{dim1})")
 
         for idx0 in range(dim0):
             
@@ -316,9 +297,6 @@ def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivari
     cnt_loaded, cnt_tables = 0, 0
     for file_path in glob.glob(pattern, recursive=True): 
         
-        # PMC4253432_2/PMC4253432_2-str-result.xml
-        # PMC4067690-str.xml
-
         basename = os.path.basename(file_path)
 
         m = re.match("PMC(\d+)(_(\d+)){0,1}", basename)        
@@ -411,8 +389,6 @@ def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivari
                     cnt_tables += 1
 
 
-                #print(f"[OK] name:'{file_path}' key:{key} num_relations={len(table.get_relations())}")
-
             cnt_loaded += 1
             print(f"[OK] name:'{file_path}' key:{key} num_tables={len(raw_tables)}", file=eval_log)
             
@@ -462,8 +438,6 @@ def _parse_cells_abbyy(xml_table):
 
     tmp_cell_matrix = np.zeros((n_rows, n_cols), dtype=int)
 
-    #print(f"{n_rows} x {n_cols}")
-
     row_idx, cell_id = 0, 0
     for xml_row in xml_rows:
         xml_cells = xml_row.findall(".//cell")
@@ -472,7 +446,6 @@ def _parse_cells_abbyy(xml_table):
             text = get_text(xml_cell).strip()
             col_span = int(get_attribute(xml_cell, "colSpan", default_value = 1))
             row_span = int(get_attribute(xml_cell, "rowSpan", default_value = 1))
-            #print(text, type(text), col_span, type(col_span), row_span, type(row_span))
             
             # find start column index
             for i in range(n_cols):
@@ -496,10 +469,7 @@ def _parse_cells_icdar(xml_table):
     
     cells = list()
     xml_cells = xml_table.findall(".//cell")
-    #print(len(xml_cells))
-
-    #print(xml_table)
-    #print(xml_cells)
+    
     cell_id = 0
     for xml_cell in xml_cells:
         text = get_text(xml_cell)
@@ -572,20 +542,15 @@ def _eval_pair(gt_data, res_data, TP, FN, FP, eval_log):
     else:
        print(f"Unknown types of GT(=gt) or RES(=res) relations!", file=eval_log)
        exit(-1)
-
-    #print(f"TP={TP} FN={FN} FP={FP}")
+    
     if TP+FN != len(gt):
         print(f"ERROR: TP+FN(={TP+FN}) != len(gt)(={len(gt)})", file=eval_log)
-    #else:
-    #    print(f"OK: TP+FN(={TP+FN}) == len(gt)(={len(gt)})")
 
     assert(TP+FN == len(gt))
     
     if TP+FP != len(res):
         print(f"ERROR: TP+FP(={TP+FP}) != len(res)(={len(res)})", file=eval_log)
-    #else:
-    #    print(f"OK: TP+FP(={TP+FP}) == len(res)(={len(res)})")
-    
+
     assert(TP+FP == len(res))
 
     return TP, FN, FP
@@ -604,8 +569,6 @@ def _create_graph(gt_items, res_items, eval_log):
         gt_nodes.add(gt_node)
         node2item[gt_node] = gt_item
 
-        #print(gt_item)
-
         for res_idx, res_item in enumerate(res_items):
             res_node = f"res_{res_idx}"
             res_nodes.add(res_node)
@@ -613,27 +576,21 @@ def _create_graph(gt_items, res_items, eval_log):
             
             pair_TP, pair_FN, pair_FP = _eval_pair(gt_item, res_item, 0, 0, 0, eval_log)
             pair_P, pair_R, pair_F1, pair_F05 = _calc_scores(pair_TP, pair_FN, pair_FP)
-            score = pair_F1
-            #score = pair_R
+            score = pair_F1            
             
             if score > 0:
                 edges.add((gt_node, res_node, score))
                 scores[(gt_node, res_node)] = (pair_TP, pair_FN, pair_FP, pair_P, pair_R, pair_F1, pair_F05)
 
-            #print(f"\t\tedge:  {gt_node} -> {res_node} : {score:.4f}")
-
     print_line(n=30, prefix="\t\t", eval_log=eval_log)
     
-    # create a bipartite graph from the pairs and run maximum weighted matching
-    #gt_nodes = sorted(gt_nodes)
-    #res_nodes = sorted(res_nodes)
+    # create a bipartite graph from the pairs and run maximum weighted matching    
     G.add_nodes_from(gt_nodes, bipartite=0)
     G.add_nodes_from(res_nodes, bipartite=1)
     G.add_weighted_edges_from(edges)
     
     print(f"\t\tgt_nodes:  {gt_nodes}", file=eval_log)
-    print(f"\t\tres_nodes: {res_nodes}", file=eval_log)
-    #print(f"\t\tedges:     {edges}")
+    print(f"\t\tres_nodes: {res_nodes}", file=eval_log)    
 
     return G, gt_nodes, res_nodes, node2item, scores
 
@@ -646,10 +603,8 @@ def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ig
     print_line(n=50, prefix='\t', eval_log=eval_log)
 
     G, gt_nodes, res_nodes, node2item, scores = _create_graph(gt_items, res_items, eval_log)
-    #G, gt_nodes, res_nodes, node2item, scores = _create_graph_dummy()
 
-    matches = nx.max_weight_matching(G)
-    #print(f"MATCHES:   {matches}")
+    matches = nx.max_weight_matching(G)    
 
     print_line(n=30, prefix="\t\t", eval_log=eval_log)
 
@@ -672,9 +627,6 @@ def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ig
 
         gt_nodes.remove(gt_node)
         res_nodes.remove(res_node)
-
-    #print(f"REMAINING GT nodes:  {gt_nodes}")
-    #print(f"REMAINING RES nodes: {res_nodes}")
 
     if len(node2item) > 0:
         for n in gt_nodes:
@@ -742,8 +694,7 @@ def eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_
             print(f"[{key}] best candidate: '{best_sub_key}' {get_scores_str(best_tp, best_fn, best_fp, best_precision, best_recall, best_f1, best_f05)}",
                 file=eval_log)
 
-            with open("res_py.csv", "a") as f:
-                #print(f"{key};{best_tp+best_fn};{best_tp+best_fp};{best_tp}", file=f)
+            with open("res_py.csv", "a") as f:                
                 print(f"{key};{best_tp};{best_fn};", file=f)
 
             print_line(c='-', eval_log=eval_log)
@@ -779,8 +730,7 @@ def eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_
             FP += fp
 
     precision, recall, F1, F05 = _calc_scores(TP, FN, FP)
-
-    #print_line(n=100, c='=')
+    
     print(f"FINAL RESULT: {get_scores_str(TP, FN, FP, precision, recall, F1, F05)}", file=eval_log)
 
     return _get_result(True, TP, FN, FP, precision, recall, F1, F05, eval_log)
@@ -831,7 +781,6 @@ def parse_args():
     return args
 
 
-
 if __name__ == "__main__":
 
     verbose = False
@@ -861,5 +810,4 @@ if __name__ == "__main__":
 
     result = eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=args.ignore_fp, eval_log=eval_log)
 
-    #print(json.dumps(result, indent=4))
     print(result["log"])

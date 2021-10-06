@@ -770,8 +770,8 @@ def parse_args():
             help="indicates whether to perform single-variant evaluation", default=True)
     parser.add_argument('--method', dest='method', type=ParsingMethod, choices=list(ParsingMethod), 
             help="parsing method (icdar, abbyy, tabula-json)", default='icdar')
-    parser.add_argument('--complexity', dest='complexity', nargs="*", type=int, choices=[0, 1, 2], 
-            help="table complexity level (0=simple, 1=complicated, 2=complex)", default='[0, 1, 2]')
+    parser.add_argument('--complexity', dest='complexity', nargs="*", type=int, choices=[0,1,2],
+            help="table complexity level (0=simple, 1=complicated, 2=complex)", default=[0,1,2])
     parser.add_argument('--verbose', dest='verbose', help="print verbose info", action="store_true", default=False)
     parser.add_argument('--ignore_fp', dest='ignore_fp', action='store_true', 
             help="ignore all false-positively recognized tables", default=False)
@@ -795,7 +795,7 @@ if __name__ == "__main__":
         
     eval_log = io.StringIO("")
     eval_log = sys.stdout
-
+    
     name_pattern = f"PMC*.{ParsingMethod.get_extension(args.method)}"
 
     tuples_to_use = load_complexity_classes("mavo_table_classes.csv", args.complexity, eval_log=eval_log) 

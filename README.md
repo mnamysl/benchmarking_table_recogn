@@ -43,13 +43,30 @@ optional arguments:
 
 Use the following commands to reproduce the multi-variant evaluation:
 
+* [ABBYY  Fine  Reader  Engine](https://www.abbyy.com/ocr-sdk) (SDK v12)
+```bash
+python3 eval_pubmed.py --res res/abbyy --method abby
+```
+
+* [TAB.IAIS](https://arxiv.org/abs/2105.11879) method:
 ```bash
 python3 eval_pubmed.py --res res/tab.iais
+```
+
+* [TabbyPDF](https://github.com/cellsrg/tabbypdf)
+```bash
 python3 eval_pubmed.py --res res/tabby
-python3 eval_pubmed.py --res res/abbyy --method abby
+```
+
+* [Tabula](https://github.com/tabulapdf/tabula-java (v1.0.4) - 'stream' and 'lattice' modes:
+```bash
 python3 eval_pubmed.py --res res/tabula_stream --method tabula.json
+```
+
+```bash
 python3 eval_pubmed.py --res res/tabula_lattice --method tabula.json
 ```
+
 Note that you need to specify the method used to parse the recognition results for each method (using the ```--method``` switch). [The ICDAR 2013 Table Competition](https://www.tamirhassan.com/html/competition/dataset-format.html#structure-model) format is used by default.
 
 Add the ```--single_variant``` switch to perform single-variant evaluation, e.g.:
@@ -76,6 +93,7 @@ TBA
 ### Authors
 
 * [Marcin Namysl](https://www.researchgate.net/profile/Marcin-Namysl-2)
+* [Tim Adams](https://www.researchgate.net/profile/Tim-Adams-3)
 
 ### License
 

@@ -28,26 +28,20 @@ tar -xvzf res.tar.gz res
 
 #### Command-Line Arguments:
 ```bash
-usage: eval_pubmed.py [-h] --res RES_DIR [--gt GT_DIR] [--single_variant]
-                      [--method {ICDAR,Abbyy,TabulaJson,Unknown}]
-                      [--complexity [{0,1,2} [{0,1,2} ...]]] [--verbose]
-                      [--ignore_fp]
+usage: eval_pubmed.py [-h] --res RES_DIR [--gt GT_DIR] [--single_variant] [--method {ICDAR,Abbyy,TabulaJson,Unknown}] 
+  [--complexity [{0,1,2} [{0,1,2} ...]]] [--verbose] [--ignore_fp]
 
 optional arguments:
   -h, --help            show this help message and exit
   --res RES_DIR         a directory wih recognition results (default: )
   --gt GT_DIR           a directory wih ground-truth annotations (default: gt)
-  --single_variant      indicates whether to perform single-variant evaluation
-                        (default: True)
+  --single_variant      indicates whether to perform single-variant evaluation (default: True)
   --method {ICDAR,Abbyy,TabulaJson,Unknown}
-                        parsing method (icdar, abbyy, tabula-json) (default:
-                        icdar)
+                        parsing method (icdar, abbyy, tabula-json) (default: icdar)
   --complexity [{0,1,2} [{0,1,2} ...]]
-                        table complexity level (0=simple, 1=complicated,
-                        2=complex) (default: [0, 1, 2])
+                        table complexity level (0=simple, 1=complicated, 2=complex) (default: [0, 1, 2])
   --verbose             print verbose info (default: False)
-  --ignore_fp           ignore all false-positively recognized tables
-                        (default: False)
+  --ignore_fp           ignore all false-positively recognized tables (default: False)
 ```
 #### Running the Evaluation Script:
 

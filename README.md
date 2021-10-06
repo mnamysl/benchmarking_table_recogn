@@ -58,7 +58,7 @@ python3 eval_pubmed.py --res res/tab.iais
 python3 eval_pubmed.py --res res/tabby
 ```
 
-* [Tabula](https://github.com/tabulapdf/tabula-java (v1.0.4) - 'stream' and 'lattice' modes:
+* [Tabula](https://github.com/tabulapdf/tabula-java) (v1.0.4) - 'stream' and 'lattice' modes:
 ```bash
 python3 eval_pubmed.py --res res/tabula_stream --method tabula.json
 ```

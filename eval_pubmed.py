@@ -39,6 +39,9 @@ class ParsingMethod(Enum):
 
 
 class Cell(object):
+    """
+    Represents a table cell object.
+    """
 
     def __init__(self, idx=-1, text="", start_row=-1, start_col=-1, end_row=-1, end_col=-1):
         self.text = self._normalize(text)
@@ -77,11 +80,17 @@ class Cell(object):
     
 
 class AdjRelationDirection(Enum):
+    """
+    Adjacency relation direction
+    """
     LeftRight = 1
     TopDown = 2
 
 
 class AdjRelation(object):
+    """
+    Represents an adjacency relation object
+    """
     def __init__(self, from_cell: Cell, to_cell: Cell, direction: AdjRelationDirection):
         self.from_cell = from_cell
         self.to_cell = to_cell
@@ -101,6 +110,10 @@ class AdjRelation(object):
 
 
 class Table(object):
+    """
+    Represents a table object
+    """
+
     def __init__(self):
         self.cells = list()
         self.relations = list()
@@ -263,6 +276,9 @@ def get_attribute(node, attribute_name, default_value = None):
 
 
 def load_complexity_classes(file_path: str, complexities_to_use=[0,1,2], eval_log=None, verbose=False):
+    """
+    Load a file with the specification of the table complexity classes
+    """
     
     print(f"Loading table complexity classes for each file from '{file_path}'; classes: {complexities_to_use}", file=eval_log)
     
@@ -290,6 +306,9 @@ def load_complexity_classes(file_path: str, complexities_to_use=[0,1,2], eval_lo
 
 def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivariant = False, record_overlap = False, 
         method=ParsingMethod.ICDAR, tuples_to_use=(), eval_log = None, filenames = []):
+    """
+    Load the data from a given directory to a dictionary of table objects.
+    """
 
     tables = dict()
     pattern = f"{dir_path}/**/{name_pattern}"
@@ -406,6 +425,9 @@ def load_xml_files(dir_path: str, name_pattern = "*.*", is_gt = False, multivari
 
 
 def _parse_cells_tabula(json_table):
+    """
+    Gets the table cells from a table in JSON format.
+    """
     
     cells = list()
     cell_id = 0
@@ -420,7 +442,10 @@ def _parse_cells_tabula(json_table):
 
 
 def _parse_cells_abbyy(xml_table):
-    
+    """
+    Gets the table cells from a table in ABBYY-XML format.
+    """
+
     cells = list()
     xml_rows = xml_table.findall(".//row")
 
@@ -466,6 +491,9 @@ def _parse_cells_abbyy(xml_table):
 
 
 def _parse_cells_icdar(xml_table):
+    """
+    Gets the table cells from a table in ICDAR-XML format.
+    """
     
     cells = list()
     xml_cells = xml_table.findall(".//cell")
@@ -485,6 +513,9 @@ def _parse_cells_icdar(xml_table):
 
 
 def _calc_f_beta_score(beta, precision, recall):
+    """
+    Calculates the F-score given the beta coefficient and the precision/recall scores.
+    """
 
     beta_sq = beta * beta
     denominator = (beta_sq * precision) + recall
@@ -493,6 +524,9 @@ def _calc_f_beta_score(beta, precision, recall):
     return f_beta
 
 def _calc_scores(TP, FN, FP):
+    """
+    Calculates precision, recall, F1, and F0.5 scores from the TP, FN, and FP counts.
+    """
 
     TPFP = TP + FP
     TPFN = TP + FN
@@ -507,6 +541,9 @@ def _calc_scores(TP, FN, FP):
 
 
 def _intersection(la: list, lb: list):
+    """
+    Calculates an intersection between two lists of relations.
+    """
     tmp = lb[:]
     cnt_tp, cnt_fn = 0, 0
     for a in la:
@@ -520,6 +557,10 @@ def _intersection(la: list, lb: list):
 
 
 def _eval_pair(gt_data, res_data, TP, FN, FP, eval_log):
+    """
+    Evaluates a pair of tables.
+    Returns the corresponding TP, FN, and FP scores.
+    """
 
     gt = gt_data.get_relations()
     res = res_data.get_relations()
@@ -557,6 +598,9 @@ def _eval_pair(gt_data, res_data, TP, FN, FP, eval_log):
 
 
 def _create_graph(gt_items, res_items, eval_log):
+    """
+    Creates a bipartite graph from two sets of tables.
+    """
 
     # init a (bipartite) graph
     G = nx.Graph()
@@ -595,6 +639,11 @@ def _create_graph(gt_items, res_items, eval_log):
     return G, gt_nodes, res_nodes, node2item, scores
 
 def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ignore_fp, eval_log):
+    """
+    Performs evaluation between the ground-truth and the recognized tables from a file.
+    Creates a bipartite graph from both sets of table nodes weighted by the affinity scores.
+    Finds the maximum weighted matching and returns the updated scores.
+    """
     
     # calculate all scores for each pair of tables in the GT and RES data
     cnt_gt, cnt_res = len(gt_items), len(res_items)
@@ -657,6 +706,9 @@ def _eval_pairs_in_file(gt_label, res_label, gt_items, res_items, TP, FN, FP, ig
 
 
 def eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_log=None):
+    """
+    Performs evaluation on a given set of ground-truth and result files.
+    """
 
     TP, FP, FN = 0, 0, 0
 
@@ -738,6 +790,9 @@ def eval_data(gt_files, res_files, res_multivariant=True, ignore_fp=False, eval_
 
 def _get_result(status:bool=False, tp:int=0, fn:int=0, fp:int=0, precision:float=0.0, recall:float=0.0, 
         f1:float=0.0, f05:float=0.0, eval_log=None):
+    """
+    Forms a dictionary from the results given as input
+    """
 
     return {
         "status" : status,

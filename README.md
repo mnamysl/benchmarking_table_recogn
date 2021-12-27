@@ -144,8 +144,19 @@ python3 eval_pubmed.py --res res/tabby --complexity 0 --ignore_fp --single_varia
 ### Citing Our Work
 
 Please cite our paper when using the code:
-```
-TBA
+```bibtex
+@article{10.1093/bioinformatics/btab843,
+    author = {Adams, Tim and Namysl, Marcin and Kodamullil, Alpha Tom and Behnke, Sven and Jacobs, Marc},
+    title = "{Benchmarking Table Recognition Performance on Biomedical Literature on Neurological Disorders}",
+    journal = {Bioinformatics},
+    year = {2021},
+    month = {12},
+    issn = {1367-4803},
+    doi = {10.1093/bioinformatics/btab843},
+    url = {https://doi.org/10.1093/bioinformatics/btab843},
+    note = {btab843},
+    eprint = {https://academic.oup.com/bioinformatics/advance-article-pdf/doi/10.1093/bioinformatics/btab843/41876542/btab843.pdf},
+}
 ```
 
 ### Authors

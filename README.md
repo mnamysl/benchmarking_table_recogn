@@ -1,6 +1,6 @@
 # Table Recognition Benchmarking
 
-This repository contains the code that can be used to reproduce the results presented in our paper: **Benchmarking Table Recognition Performance on Biomedical Literature on Neurological Disorders**. 
+This repository contains the code that can be used to reproduce the results presented in our paper: **[Benchmarking Table Recognition Performance on Biomedical Literature on Neurological Disorders](https://academic.oup.com/bioinformatics/advance-article-abstract/doi/10.1093/bioinformatics/btab843/6478270)**. 
 
 ## Quick Start
 
